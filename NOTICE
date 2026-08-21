@@ -1,0 +1,11 @@
+pybullet_pbr builds on the Bullet Physics SDK.
+
+build.sh fetches Bullet from https://github.com/bulletphysics/bullet3 and applies the
+patch in patches/apply.py to it. Bullet is distributed under the zlib license and is
+not redistributed as part of this repository; the build produces a local pybullet
+extension in build/ and never modifies an installed PyBullet.
+
+The renderer sources in renderer/ include short excerpts adapted from Bullet's
+GLInstancingRenderer (the light's orthographic projection and look-at construction, and
+the instanced vertex layout) so that this renderer's output lines up with Bullet's own.
+Those excerpts remain under Bullet's zlib license.

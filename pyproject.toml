@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pybullet_pbr"
+version = "0.1.0"
+description = "A physically based renderer for PyBullet's GUI and offscreen cameras"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+dependencies = ["numpy"]
+
+[project.optional-dependencies]
+demos = ["pillow"]
+
+[project.urls]
+Homepage = "https://github.com/giorgio/pybullet-pbr"
+
+[tool.setuptools]
+packages = ["pybullet_pbr"]
+
+# The native renderer is not built by pip: it is a patched local build of PyBullet
+# itself, produced by ./build.sh into build/. Installing this package only puts the
+# Python side on the path; pybullet_pbr.activate() then loads the built extension.

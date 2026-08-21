@@ -1,0 +1,15 @@
+# Bullet is fetched and patched by build.sh, never committed
+/bullet/
+
+# build output
+/build/
+build.log
+__pycache__/
+*.pyc
+*.so
+
+# written into the working directory by Bullet's example browser at runtime
+0_VRDemoSettings.txt
+
+# working notes, not part of the package
+*_plan.md

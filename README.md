@@ -306,5 +306,5 @@ silhouette softening, ghost-free motion, cone geometry, headless parity, and sha
 
 ## Licence
 
-MIT, see `LICENSE`. Bullet is fetched at build time and remains under its own zlib
-licence; see `NOTICE`.
+Copyright (C) 2026 Giorgio Clivio. GNU General Public License v3.0, see `LICENSE`. Bullet is fetched at build
+time and remains under its own zlib licence, as do the short Bullet excerpts in `renderer/`; see `NOTICE`.

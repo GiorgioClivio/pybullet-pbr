@@ -23,7 +23,7 @@ showcase.py             interactive tour; --shots renders it all to build/showca
 example_robotics.py     worked integration example
 ```
 
-`PYBULLET_PBR_DISABLE=1` falls back to the stock renderer — the fastest A/B check.
+`PYBULLET_PBR_DISABLE=1` falls back to the stock renderer: the fastest A/B check.
 `PYBULLET_PBR_SHADER_DIR` overrides the compiled-in shader path, so shader edits need no
 rebuild. Build quirk: GCC 15 errors on pybullet.c's `PyArray_DATA(PyObject*)`; build.sh
 passes `-Wno-incompatible-pointer-types` via `CFLAGS`. Do not "fix" it in Bullet's source.
@@ -61,7 +61,7 @@ keeps `getCameraImage()` working.
 - Vertex format is 9 floats: `position.xyzw`, `normal.xyz`, `uv.xy`. There is no tangent
   attribute; normal mapping derives its frame from screen-space derivatives instead.
 - All instance data lives in one VBO (`m_data->m_vbo`): shape vertices occupy the first
-  `m_maxShapeCapacityInBytes`, then four tightly packed `totalNumInstances * vec4` arrays —
+  `m_maxShapeCapacityInBytes`, then four tightly packed `totalNumInstances * vec4` arrays:
   position, quaternion, colour, scale. Attribute slots 0..6 with divisors `{0,1,1,0,0,1,1}`.
   Slots 7, 8 and 9 come from our own buffers: previous-frame position, previous-frame
   quaternion, and the per-instance material.
@@ -83,7 +83,7 @@ collision shape could not otherwise have different materials.
 Materials reach the shader as instanced vertex attribute 9, reordered from uid order into
 internal-instance order via `m_publicGraphicsInstances.getHandle(uid)->m_internalInstanceIndex`.
 Do **not** index a table by the uid inside the shader: `instance_scale_obUid.w` does not
-survive as the uid in this build — measured, it reads over 1000 for uid 0. That is also why
+survive as the uid in this build (measured, it reads over 1000 for uid 0). That is also why
 pybullet's own segmentation mask returns all -1 here, with the stock renderer too.
 
 Textures are per registered shape and bound per draw call, which keeps instancing intact.
@@ -97,7 +97,7 @@ into the eglRenderer extension too. Four things that are easy to get wrong:
 - **each extension has its own copy of the renderer's globals.** `config.py` dispatches
   every setter to all attached libraries and journals them, so a library attached later is
   replayed up to date; queries go to the first library only. `_MUTATORS` is an explicit
-  list, not a name-prefix test — `pbr_register_texture` is a mutator despite not being
+  list, not a name-prefix test: `pbr_register_texture` is a mutator despite not being
   called "set".
 - **weak hook declarations must be `extern "C"`.** A plain `__attribute__((weak))` C++
   declaration is name-mangled while our definitions are `extern "C"`, so the pointer stays
@@ -106,7 +106,7 @@ into the eglRenderer extension too. Four things that are easy to get wrong:
   changeVisualShape transport does not reach the headless path. The EGL converter reports
   (body, link) → graphics instance instead, and materials are addressed by body via
   `pbr_set_material_by_body`. Requests are recorded so they can be set before the instance
-  exists — the converter creates instances lazily at the first render.
+  exists, because the converter creates instances lazily at the first render.
 - the sun direction likewise travels through `configureDebugVisualizer(lightPosition=)` in
   the GUI, which does nothing headless. `pbr_set_sun_direction` is the real path.
 
@@ -126,7 +126,7 @@ at sunny-16 (EV 14.97) that lands at 0.149, mid grey.
   documented, and `tests/test_lights.py` checks the pool radius against `h*tan(a/2)`;
 - sky colours in `scenes.py` are chromaticities scaled by `sky_luminance` in cd/m²;
 - a scene's `ev` is metered for its *natural* light, and for the light reaching a
-  horizontal surface — beam illuminance times sin(elevation). A robot's own lamp needs
+  horizontal surface, beam illuminance times sin(elevation). A robot's own lamp needs
   `photometry.ev_for_light()` instead;
 - a material's `base_color` is **sRGB**, so a surface reflecting 9% of the light is 0.33,
   not 0.09. A scene's `ground_bounce` is `albedo * horizontal illuminance / pi` and must be
@@ -149,9 +149,9 @@ lamp reads neutral only when its colour temperature matches the camera's white b
 
 The sun's depth map is rendered here, not by the base class, with normal back-face culling.
 Bullet's own pass culls *front* faces, so a solid object's occluder depth is its far side
-and the ground under a sphere tests as lit. The light matrices —
-`ortho(-worldSize, worldSize, ..., 1, 300)` and `lookAt(direction*60 + target, target, ...)`
-— live in `pbrCreateOrtho`/`pbrCreateLookAt`.
+and the ground under a sphere tests as lit. The light matrices,
+`ortho(-worldSize, worldSize, ..., 1, 300)` and `lookAt(direction*60 + target, target, ...)`,
+live in `pbrCreateOrtho`/`pbrCreateLookAt`.
 
 That ortho spans 299 world units, so a bias expressed in raw depth units is ~300x too strong
 and silently erases every shadow. Bias is configured in world units and divided by
@@ -183,7 +183,7 @@ and the bias is in metres for both light types.
   everywhere and the halo comes out rectangular.
 - `RenderTarget::generateColorMips()` deliberately leaves `GL_TEXTURE_MIN_FILTER` alone.
   Setting a mipmap filter makes every later plain `texture()` read of that attachment depend
-  on the chain still being current, and after a resize it is not — those reads return black.
+  on the chain still being current, and after a resize it is not: those reads return black.
 - Motion blur shares TAA's velocity buffer, so previous-frame transforms must be maintained
   whenever *either* is on, or stationary objects smear.
 
@@ -192,7 +192,7 @@ and the bias is in metres for both light types.
 `renderer/Environment.h` builds the cubemap, irradiance convolution, prefiltered specular
 mip chain and BRDF LUT once, whenever Python marks the environment dirty; the render thread
 consumes that flag because only it has a GL context. Every cube face is a fullscreen
-triangle with a `face` uniform — no cube mesh, no per-face view matrices. The source is
+triangle with a `face` uniform: no cube mesh, no per-face view matrices. The source is
 either an equirectangular HDR (stb_image's `stbi_loadf`) or a procedural sky, both through
 `env_capture.frag`.
 
@@ -201,7 +201,7 @@ either an equirectangular HDR (stb_image's `stbi_loadf`) or a procedural sky, bo
   draw with, so every draw call fails and the scene renders empty.
 - the camera basis for the background ray comes from the **view matrix** (its rotation
   transposed), not from `getCameraUpVector()`, which does not reliably return the camera's
-  own up — with it the sky has no vertical gradient at all.
+  own up; with it the sky has no vertical gradient at all.
 - the sky has no sun *disc*: the directional light already supplies the sun highlight, and a
   `pow(cos, 800)` disc is far below cubemap resolution and shows up as a blocky smear.
 - the background pass fades the environment's lower hemisphere to black when `airless` is

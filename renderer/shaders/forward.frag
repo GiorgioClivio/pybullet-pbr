@@ -138,6 +138,15 @@ float sunVisibility(float NdotL)
 	float slope = sqrt(max(1.0 - NdotL * NdotL, 0.0)) / max(NdotL, 0.05);
 	float bias = shadowBias + shadowSlopeBias * min(slope, 4.0);
 
+	// A zero softness explicitly selects the interactive hard-shadow path.
+	// Keep one depth lookup instead of blocker search plus a 25-tap filter.
+	if (shadowSoftness <= 0.0)
+	{
+		float stored = texture(shadowMap, coord.xy).r;
+		float visible = (coord.z - bias) <= stored ? 1.0 : 0.0;
+		return mix(1.0, visible, shadowIntensity);
+	}
+
 	float radius = shadowSoftness;
 	if (sunPenumbraScale > 0.0)
 	{
@@ -321,6 +330,16 @@ void main(void)
 {
 	if (instanceColor.w == 0.0)
 		discard;
+	// Screen-door transparency for 0 < alpha < 1 (sorted blending is not implemented):
+	// keep a 4x4 Bayer-ordered share of the pixels equal to alpha.
+	if (instanceColor.w < 1.0)
+	{
+		const float bayer[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0,
+										  3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+		ivec2 cell = ivec2(gl_FragCoord.xy) & 3;
+		if (instanceColor.w <= (bayer[cell.y * 4 + cell.x] + 0.5) / 16.0)
+			discard;
+	}
 
 	// Screen-space motion since last frame, in uv units, for temporal reprojection.
 	outVelocity = (clipCurrent.xy / clipCurrent.w - clipPrevious.xy / clipPrevious.w) * 0.5;

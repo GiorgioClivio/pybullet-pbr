@@ -10,7 +10,7 @@ untouched.
 
 ![A robot lighting its own way through a permanently shadowed region](docs/images/moon_psr.jpg)
 
-The same scene under `earth_day`, `earth_sunset` and `moon_psr` — one call apart. The
+The same scene under `earth_day`, `earth_sunset` and `moon_psr`, one call apart. The
 last one is lit only by the lamps the robot carries.
 
 ```python
@@ -43,7 +43,7 @@ camera control and `getCameraImage()` all behave exactly as before.
 Linux, OpenGL 3.3+, a C++ compiler, and the Python, GL and X11 development headers.
 
 ```bash
-git clone <your-repo-url> pybullet-pbr && cd pybullet-pbr
+git clone https://github.com/GiorgioClivio/pybullet-pbr.git && cd pybullet-pbr
 ./build.sh
 ```
 
@@ -128,7 +128,7 @@ Each sets sun direction, illuminance in lux and colour temperature, sky luminanc
 cd/m², indirect-light strength, camera EV and shadow softness. Earth's midday sun is
 100 000 lux, the Moon's 128 000 (no atmosphere to absorb it), Mars' 55 000 (2.3× further
 out), a full moon 0.25. A scene's EV is metered for the light that actually reaches a
-horizontal surface — the beam illuminance times the sine of the sun's elevation — while
+horizontal surface (the beam illuminance times the sine of the sun's elevation), while
 scenes meant to read dark are deliberately left under that.
 
 ## Materials
@@ -150,7 +150,7 @@ pybullet_pbr.material_names()
 Reflectances match the real substance: lunar mare regolith 9%, highland 16%, fresh
 Aristarchus-class ejecta 26%, pyroclastic mantle 7%, Martian soil 25% in red falling to
 6% in blue, concrete 26%. These are given as **sRGB base colours**, which is the encoded
-form — 9% reflectance is 0.33 in sRGB, not 0.09.
+form: 9% reflectance is 0.33 in sRGB, not 0.09.
 
 Materials are per graphics *instance*, so two bodies built from one shared collision
 shape can carry different materials.
@@ -168,11 +168,11 @@ pybullet_pbr.set_normal_scale(1.0)
 Any image works; the ones in `assets/textures` are only defaults. Roughness, metallic and
 AO maps *multiply* the material's values. Normal maps derive their tangent frame per
 pixel, so meshes need no tangent attribute and geometry without usable UVs falls back to
-its plain geometric normal — a normal map is only as good as the UVs under it, and
+its plain geometric normal. A normal map is only as good as the UVs under it, and
 Bullet's built-in primitives have poor ones.
 
 Base colour multiplies any texture already on the shape, so a ground preset applied over
-PyBullet's checkerboard plane renders at roughly half the albedo it names — that pattern
+PyBullet's checkerboard plane renders at roughly half the albedo it names, because that pattern
 averages about 0.6. `assets/textures/scale_grid.png` keeps a pattern for judging distance
 and object size while averaging 0.95:
 
@@ -203,13 +203,16 @@ while True:
 |---|---|
 | `lumens` | luminous flux. Car headlight ~1200, 60 W bulb ~800, work floodlight ~10000. Or give `candela`. |
 | `kelvin` | 1800 candle, 2700 warm white, 4000 neutral, 5500 daylight, 6500 overcast. A lamp renders neutral when its temperature matches the camera's white balance. |
-| `radius` | emitter size in metres — drives shadow softness *and* highlight size. |
+| `radius` | emitter size in metres; drives shadow softness *and* highlight size. |
 | `cone_angle` | full outer angle of a spot, in degrees. `cone_softness` 0 is hard-edged, 1 fades from the centre. |
 | `yaw` / `pitch` | aim in degrees; yaw 0 is +X, pitch −90 straight down. Or give `direction`. |
 | `range` | metres past which the light is cut off. |
 
-Also `move_light`, `aim_light`, `look_at`, `update_light`, `remove_light`,
-`clear_lights`, `get_light`, `detach_light`, `set_light_shadow_bias`.
+`add_spot_light` and `add_point_light` are shorthands for `add_light(kind=pybullet_pbr.SPOT)`
+and `add_light(kind=pybullet_pbr.POINT)`. Also `move_light`, `aim_light`, `look_at`,
+`update_light`, `remove_light`, `clear_lights`, `get_light`, `light_count`, `max_lights`,
+`detach_light`, `set_light_shadow_bias` / `get_light_shadow_bias`, and the conversions
+`direction_from_angles` / `angles_from_direction`.
 
 `offset` and `direction` in `attach_light` are in the link's local frame, so they rotate
 with the robot. There are 8 light slots and a 16-tile shadow atlas: a spot costs one
@@ -221,7 +224,7 @@ The renderer works in real photometric units, so exposure is photographic too.
 
 ```python
 pybullet_pbr.set_camera_exposure(aperture=16, shutter=1/125, iso=100)   # sunny 16
-pybullet_pbr.set_ev(14.7)
+pybullet_pbr.set_ev(14.7)                     # get_ev() reads it back
 pybullet_pbr.set_auto_exposure(True, key=0.18, min_ev=-6, max_ev=20)
 pybullet_pbr.set_white_balance(kelvin=5500)
 pybullet_pbr.set_sensor(bloom=1.0, vignette=0.4, noise=0.15, motion_blur=0.5)
@@ -230,6 +233,10 @@ from pybullet_pbr import photometry
 photometry.ev_for_illuminance(500)          # 7.05, correct EV for an office
 photometry.ev_for_light(4000, distance=5)   # expose for your own headlight
 ```
+
+Every setter has a matching getter (`get_ev`, `get_auto_exposure`, `get_white_balance`,
+`get_sensor`, `get_shadows`, ...). `pybullet_pbr.is_active()` reports whether the PBR build
+is the loaded `pybullet`.
 
 Reference EVs: 15 direct sun, 12 overcast, 9 bright room, 3 candlelit, −1 full moon.
 
@@ -240,7 +247,7 @@ is no adaptation delay yet.
 White balance defaults to a camera's daylight preset (5500 K). Because the lights are
 physical, a 5500 K sun really is warmer than sRGB's 6500 K white point, and a camera
 cancels that by dividing through the colour of the illuminant it is balanced for. Scenes
-use a fixed daylight balance rather than balancing to their own sun — dividing a 2000 K
+use a fixed daylight balance rather than balancing to their own sun: dividing a 2000 K
 key light out of a sunset leaves only the blue sky fill, so the golden hour would come
 out blue. Airless scenes balance to their own sun, having no sky fill to preserve.
 
@@ -260,8 +267,8 @@ pybullet_pbr.set_antialiasing("fxaa")         # "off" | "fxaa" | "taa"
 pybullet_pbr.set_diagnostic("normals")        # or "ao", or False
 ```
 
-The environment lights the scene *and* is drawn behind it. Its textures — cubemap,
-irradiance, prefiltered specular, BRDF LUT — are built once when it changes and cost
+The environment lights the scene *and* is drawn behind it. Its textures (cubemap,
+irradiance, prefiltered specular, BRDF LUT) are built once when it changes and cost
 nothing per frame. `set_environment(None)` is not the bottom of the strength scale: it
 hands ambient back to the flat `set_sun(ambient=...)` term.
 
@@ -269,8 +276,12 @@ TAA accumulates within one viewport, so interleaving `getCameraImage()` with GUI
 (two different sizes) throws the history away each frame; use FXAA there.
 
 PyBullet's `COV_ENABLE_SHADOWS`, `shadowMapResolution` and `shadowMapWorldSize` still
-work. Its `shadowMapIntensity` does not — shadows remove all direct sun by default and
+work. Its `shadowMapIntensity` does not: shadows remove all direct sun by default and
 ambient still lights the shadowed area, so `strength` replaces it.
+The sun's shadow map is centred on the GUI camera target and snapped to whole
+shadow-map texels, so a follow camera does not make static shadow edges shimmer
+(`tests/test_shadow_stability.py` records the GUI framebuffer and needs ffmpeg:
+14 to 32 changed pixels per sub-texel camera step before the snap, 1 to 4 after).
 
 ## Tests
 
@@ -278,15 +289,16 @@ ambient still lights the shadowed area, so `strength` replaces it.
 ./run_tests.sh
 ```
 
-Thirteen acceptance tests, each asserting a measured property of the rendered image
+Fourteen acceptance tests, each asserting a measured property of the rendered image
 rather than a golden file: exposure monotonicity, highlight roll-off, material
 separation, shadow placement and absence of acne, contact occlusion without halos,
-silhouette softening, ghost-free motion, cone geometry, and headless parity.
+silhouette softening, ghost-free motion, cone geometry, headless parity, and shadow stability under a moving camera.
 
 ## Limitations
 
 - Linux and OpenGL only. No Vulkan, no macOS or Windows path.
-- Sorted transparency is not implemented; semi-transparent instances render as opaque.
+- Sorted transparency is not implemented. Instances with 0 < alpha < 1 use screen-door
+  transparency: a 4x4 ordered-dither share of their pixels, equal to alpha, is drawn.
 - Point and point-sprite primitives are skipped by this renderer.
 - Removing a base-colour texture works in the GUI but not headless, where PyBullet's EGL
   converter ignores it; assign a plain white image instead.

@@ -1,7 +1,7 @@
 """Physical light units: colour temperature, luminous flux, and camera exposure.
 
-The renderer works in real photometric units — illuminance in lux and luminance in
-cd/m² — so a light you specify in lumens behaves like that lamp would, and a scene lit
+The renderer works in real photometric units (illuminance in lux and luminance in
+cd/m²), so a light you specify in lumens behaves like that lamp would, and a scene lit
 by 100 000 lux daylight is genuinely 10 000x brighter than one lit by a 10 lux corridor.
 Nothing would be visible without a matching camera exposure, so exposure is photographic
 too: aperture, shutter and ISO, or an EV100 value directly.

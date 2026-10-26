@@ -15,7 +15,7 @@ dependencies = ["numpy"]
 demos = ["pillow"]
 
 [project.urls]
-Homepage = "https://github.com/giorgio/pybullet-pbr"
+Homepage = "https://github.com/GiorgioClivio/pybullet-pbr"
 
 [tool.setuptools]
 packages = ["pybullet_pbr"]

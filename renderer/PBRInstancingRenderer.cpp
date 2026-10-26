@@ -1779,6 +1779,16 @@ void PBRInstancingRenderer::renderShadowMap()
 	b3PlaneSpace1(lightDir, up, lightFwd);
 
 	float worldSize = m_data->m_shadowMapWorldSize;
+	// Snap the frustum centre to whole shadow-map texels in the light's plane. A follow
+	// camera moves the target continuously; sub-texel slides re-rasterise every static
+	// shadow edge each frame (shimmer). Snapped, the texel grid stays fixed in the world.
+	float texel = 2.f * worldSize / (float)size;
+	if (texel > 0.f)
+	{
+		float u = target.dot(up), v = target.dot(lightFwd);
+		target += up * (floorf(u / texel + 0.5f) * texel - u) +
+				  lightFwd * (floorf(v / texel + 0.5f) * texel - v);
+	}
 	float lightProjection[16], lightView[16], lightViewProjection[16];
 	pbrCreateOrtho(-worldSize, worldSize, -worldSize, worldSize,
 				   PBR_SHADOW_NEAR, PBR_SHADOW_FAR, lightProjection);
